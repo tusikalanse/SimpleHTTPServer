@@ -2,11 +2,17 @@
 
 #include <cstring>
 
+int user::usercount = 1;
+
 user::user(const char* _username, const char* _password) {
   strcpy(username, _username);
   strcpy(password, _password);
   userid = usercount++;
   roomid = 0;
+}
+
+int user::getuserid() {
+  return userid;
 }
 
 int user::joinroom(int _roomid) {

@@ -5,6 +5,7 @@
 class user {
  public:
   user(const char* _username, const char* _password);
+  int getuserid();
   int joinroom(int _roomid);
   int exitroom();
   int login(const char* _password);
