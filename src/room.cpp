@@ -2,12 +2,12 @@
 
 #include <cstring>
 
-int room::roomcount = 1;
+int room::roomcount = 0;
 int room::maxusercount = 0;
 
 room::room(const char* _roomname) {
   strcpy(roomname, _roomname);
-  roomid = roomcount++;
+  roomid = ++roomcount;
   for (int i = 0; i < maxusercount; ++i) {
     userlist[i] = NULL;
   }

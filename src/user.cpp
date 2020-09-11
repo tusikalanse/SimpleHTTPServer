@@ -2,12 +2,12 @@
 
 #include <cstring>
 
-int user::usercount = 1;
+int user::usercount = 0;
 
 user::user(const char* _username, const char* _password) {
   strcpy(username, _username);
   strcpy(password, _password);
-  userid = usercount++;
+  userid = ++usercount;
   roomid = 0;
 }
 
