@@ -15,6 +15,10 @@ int user::getuserid() {
   return userid;
 }
 
+int user::getroom() {
+  return roomid;
+}
+
 int user::joinroom(int _roomid) {
   if (roomid != 0) return -1;
   roomid = _roomid;
