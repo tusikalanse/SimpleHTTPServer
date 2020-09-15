@@ -14,6 +14,8 @@ class myserver {
  private:
   void work(int client_sockfd);
   void HTTPParser(int client_sockfd, const char* buf);
+  void dealGet(int client_sockfd, const char* buf, int len);
+  void dealPost(int client_sockfd, const char* buf, const char* body, int len);
   static void setnonblocking(int sockfd);
   in_port_t port;
   static const int MAX_EVENTS = 1024;

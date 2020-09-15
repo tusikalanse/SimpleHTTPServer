@@ -123,9 +123,34 @@ void myserver::HTTPParser(int client_sockfd, const char* buf) {
   while (IDX < n) {
     if (buf[IDX] == 'G') {
       const char* temp = strstr(buf + IDX, "\r\n\r\n");
-      
+      dealGet(client_sockfd, buf + IDX, temp - buf - IDX + 4);
+      IDX = temp - buf + 4;
+    }
+    else {
+      const char* temp = strstr(buf + IDX, "Content-Length:");
+      int length = 0;
+      char ch = *temp;
+      while (ch < '0' || ch > '9') ch = *++temp;
+      while (ch >= '0' && ch <= '9') {
+        length = length * 10 + ch - '0';
+        ch = *++temp;
+      }
+      temp = strstr(temp, "\r\n\r\n");
+      dealPost(client_sockfd, buf + IDX, temp + 4, length);
+      IDX = temp - buf + length + 4;
     }
   }
+}
+
+void myserver::dealGet(int client_sockfd, const char* buf, int len) {
+  const char* temp = strchr(buf, '/');
+  if (strstr(temp, "register") == temp + 1) {
+    
+  }
+}
+
+void myserver::dealPost(int client_sockfd, const char* buf, const char* body, int len) {
+
 }
 
 void myserver::setnonblocking(int sockfd) {
