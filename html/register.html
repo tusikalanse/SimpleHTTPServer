@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>register</title>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+    <script src="http://code.jquery.com/jquery-latest.js"></script>
+    <script>
+        function doPost(URL) {
+            PARAMS = {'UID' : $("#u11_input").val(), 'password' : $("#u12_input").val()};
+            var temp = document.createElement("form");
+            temp.action = URL;
+            temp.method = "post";
+            temp.style.display = "none";
+            for (var x in PARAMS) {
+                var opt = document.createElement("textarea");
+                opt.name = x;
+                opt.value = PARAMS[x];
+                temp.appendChild(opt);
+            }
+            document.body.appendChild(temp);
+            temp.submit();
+            return temp;
+        }
+    </script>
+  </head>
+  <body>
+    <div id="base" class="">
+
+      <div id="u8_text">
+        <p><span style="text-decoration:none;">注册新账号</span></p>
+      </div>
+
+      <div id="u9_text">
+        <p><span style="text-decoration:none;">用户名：</span></p>
+        <input id="u11_input" type="text" value="" class="u11_input"/>
+      </div>
+
+      <div id="u10_text">
+        <p><span style="text-decoration:none;">密码：</span></p>
+        <input id="u12_input" type="password" value="" class="u12_input"/>
+      </div>
+
+      <div id="u13_text" class="text ">
+        <p><span style="text-decoration:none;cursor:pointer" onclick="doPost('register')">注册账号</span></p>
+      </div>
+
+    </div>
+  </body>
+</html>
