@@ -2,8 +2,7 @@
 #define USER_H
 
 //the user class
-class user {
- public:
+struct user {
   user(const char* _username, const char* _password);
   int getuserid();
   int getroom();
@@ -11,7 +10,6 @@ class user {
   int exitroom();
   int login(const char* _password);
   static int usercount;
- private:
   int userid;
   char username[128];
   char password[128];

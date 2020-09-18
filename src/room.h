@@ -3,7 +3,7 @@
 
 #include "user.h"
 
-class room {
+struct room {
  public:
   room(const char* _roomname);
   int removeuser(int userid);
@@ -12,7 +12,6 @@ class room {
   int count();
   static int roomcount;
   static int maxusercount;
- private:
   int roomid;
   char roomname[128];
   int usercount;
