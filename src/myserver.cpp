@@ -145,12 +145,167 @@ void myserver::HTTPParser(int client_sockfd, const char* buf) {
 void myserver::dealGet(int client_sockfd, const char* buf, int len) {
   const char* temp = strchr(buf, '/');
   if (strstr(temp, "register") == temp + 1) {
-    
+    //todo 发送register页面
+    sendHTMLPage(client_sockfd, "register");
+  }
+  else if (strstr(temp, "login") == temp + 1) {
+    sendHTMLPage(client_sockfd, "login");
+  }
+  else if (strstr(temp, "roomlist") == temp + 1 || strstr(temp, "room") == temp + 1) {
+    if (temp[8] != '?') 
+      sendHTMLPage(client_sockfd, "login");
+    else {
+      const char* name = strstr(buf, "name=");
+      char* password = const_cast<char*>(strstr(buf, "&password="));
+      password[0] = '\0';
+      char* end = const_cast<char*>(strstr(buf, "\r\n"));
+      end[0] = '\0';
+      int success = handler.login(name + 5, password + 10);
+      if (success) {
+        int room = handler.getRoom(name + 5);
+        if (room == 0) {
+          sendRoomList(client_sockfd, name, password);
+        }
+        else {
+          sendRoom(client_sockfd, name, password, room);
+        }
+      }
+      else 
+        sendHTMLPage(client_sockfd, "login");
+    }
+  }
+  else {
+    sendErrorPage(client_sockfd, "notfound");
   }
 }
 
 void myserver::dealPost(int client_sockfd, const char* buf, const char* body, int len) {
-
+  const char* temp = strchr(buf, '/');
+  if (strstr(temp, "register") == temp + 1) {
+    //todo 发送register页面
+    const char* name = strstr(body, "name=");
+    char* password = const_cast<char*>(strstr(body, "&password="));
+    password[0] = '\0';
+    char* end = const_cast<char*>(strstr(body, "\r\n"));
+    end[0] = '\0';
+    int registerStatus = handler.registerUser(name + 5, password + 10);
+    if (registerStatus == -1) {
+      sendErrorPage(client_sockfd, "User already exist");
+    }
+    else if (registerStatus == 2) {
+      sendErrorPage(client_sockfd, "Server refused your registration");
+    }
+    else if (registerStatus == 3) {
+      sendErrorPage(client_sockfd, "Username or password too long");
+    }
+    else {
+      sendSuccessPage(client_sockfd, "Successfully registered");
+    }
+  }
+  else if (strstr(temp, "login") == temp + 1) {
+    const char* name = strstr(body, "name=");
+    char* password = const_cast<char*>(strstr(body, "&password="));
+    password[0] = '\0';
+    char* end = const_cast<char*>(strstr(body, "\r\n"));
+    end[0] = '\0';
+    int loginStatus = handler.login(name + 5, password + 10);
+    if (loginStatus == 0) {
+      sendErrorPage(client_sockfd, "Wrong Username or Password");
+    }
+    else {
+      int room = handler.getRoom(name + 5);
+      if (room == 0) {
+        sendRoomList(client_sockfd, name + 5, password + 10);
+      }
+      else {
+        sendRoom(client_sockfd, name + 5, password + 10, room);
+      }
+    }
+  }
+  else if (strstr(temp, "join") == temp + 1) {
+    const char* name = strstr(body, "name=");
+    char* password = const_cast<char*>(strstr(body, "&password="));
+    password[0] = '\0';
+    char* room = const_cast<char*>(strstr(body, "&roomid="));
+    int roomid = atoi(room);
+    int userid = handler.getUserID(name + 5);
+    char* end = const_cast<char*>(strstr(body, "\r\n"));
+    end[0] = '\0';
+    int loginStatus = handler.login(name + 5, password + 10);
+    if (loginStatus == 0) {
+      sendErrorPage(client_sockfd, "Wrong Username or Password");
+    }
+    else {
+      int joinStatus = handler.joinRoom(userid, roomid);
+      if (joinStatus == -1) {
+        sendErrorPage(client_sockfd, "Room does not exist");
+      }
+      else if (joinStatus == -2) {
+        sendErrorPage(client_sockfd, "User does not exist");
+      }
+      else if (joinStatus == -3) {
+        sendErrorPage(client_sockfd, "The room is full", name + 5, password + 10);
+      }
+      else if (joinStatus == -4) {
+        sendErrorPage(client_sockfd, "Please exit your room first", name + 5, password + 10);
+      }
+      else if (joinStatus == -5) {
+        sendErrorPage(client_sockfd, "Join room failed",  name + 5, password + 10);
+      }
+      else if (joinStatus == 0) {
+        sendRoom(client_sockfd, name + 5, password + 10, roomid);
+      }
+    }
+  }
+  else if (strstr(temp, "exit") == temp + 1) {
+    const char* name = strstr(body, "name=");
+    char* password = const_cast<char*>(strstr(body, "&password="));
+    password[0] = '\0';
+    int userid = handler.getUserID(name + 5);
+    char* end = const_cast<char*>(strstr(body, "\r\n"));
+    end[0] = '\0';
+    int loginStatus = handler.login(name + 5, password + 10);
+    if (loginStatus == 0) {
+      sendErrorPage(client_sockfd, "Wrong Username or Password");
+    }
+    else {
+      int exitStatus = handler.exitRoom(userid);
+      if (exitStatus == -1) {
+        sendErrorPage(client_sockfd, "User does not exist");
+      }
+      else if (exitStatus == -2) {
+        sendErrorPage(client_sockfd, "You and not in a room", name + 5, password + 10);
+      }
+      else if (exitStatus == 0) {
+        sendRoomList(client_sockfd, name + 5, password + 10);
+      }
+    }
+  }
+  else if (strstr(temp, "create") == temp + 1) {
+    const char* name = strstr(body, "name=");
+    char* password = const_cast<char*>(strstr(body, "&password="));
+    password[0] = '\0';
+    char* room = const_cast<char*>(strstr(body, "&roomname="));
+    int userid = handler.getUserID(name + 5);
+    char* end = const_cast<char*>(strstr(body, "\r\n"));
+    end[0] = '\0';
+    int loginStatus = handler.login(name + 5, password + 10);
+    if (loginStatus == 0) {
+      sendErrorPage(client_sockfd, "Wrong Username or Password");
+    }
+    else {
+      int createStatus = handler.createRoom(room + 10);
+      if (createStatus == -1) {
+        sendErrorPage(client_sockfd, "The number of rooms has reached the limit", name + 5, password + 10);
+      }
+      else {
+        sendSuccessPage(client_sockfd, "Create new room success!", name + 5, password + 10);
+      }
+    }
+  }
+  else {
+    sendHTMLPage(client_sockfd, "notfound");
+  }
 }
 
 void myserver::setnonblocking(int sockfd) {
