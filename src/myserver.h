@@ -24,10 +24,12 @@ class myserver {
   void sendErrorPage(int client_s, const char* hint);
   void sendErrorPage(int client_s, const char* hint, const char* name, const char* password);
   void sendRoomList(int client_sockfd, const char* name, const char* password);
-  void sendRoom(int client_sockfd, const char* name, const char* password, int roomid);
+  void sendRoom(int client_sockfd, const char* name, const char* password, const char* roomname);
   static void setnonblocking(int sockfd);
   in_port_t port;
   static const int MAX_EVENTS = 1024;
+  static const int PATH_MAX = 512;
+  static const int BUFFER_SIZE = 8192;
   roomhandler<20, 5> handler;
 };
 

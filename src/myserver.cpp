@@ -167,7 +167,7 @@ void myserver::dealGet(int client_sockfd, const char* buf, int len) {
           sendRoomList(client_sockfd, name, password);
         }
         else {
-          sendRoom(client_sockfd, name, password, room);
+          sendRoom(client_sockfd, name, password, handler.getRoomName(room));
         }
       }
       else 
@@ -307,6 +307,25 @@ void myserver::dealPost(int client_sockfd, const char* buf, const char* body, in
     sendHTMLPage(client_sockfd, "notfound");
   }
 }
+
+void myserver::sendHTMLPage(int client_sockfd, const char* address) {
+  char path[PATH_MAX];
+  char buffer[BUFFER_SIZE];
+  sprintf(path, "html/%s.html", address);
+
+}
+
+void myserver::sendSuccessPage(int client_s, const char* hint);
+
+void myserver::sendSuccessPage(int client_s, const char* hint, const char* name, const char* password);
+
+void myserver::sendErrorPage(int client_s, const char* hint);
+
+void myserver::sendErrorPage(int client_s, const char* hint, const char* name, const char* password);
+
+void myserver::sendRoomList(int client_sockfd, const char* name, const char* password);
+
+void myserver::sendRoom(int client_sockfd, const char* name, const char* password, const char* roomname);
 
 void myserver::setnonblocking(int sockfd) {
   int flag = fcntl(sockfd, F_GETFL, 0);
