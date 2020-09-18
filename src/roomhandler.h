@@ -15,6 +15,8 @@ class roomhandler {
   int init(int useripckey, int roomipckey);
   int registerUser(const char* username, const char* password);
   int login(const char* username, const char* password);
+  int getRoom(const char* username);
+  int getUserID(const char* username);
   int createRoom(const char* roomname);
   int joinRoom(int userid, int roomid);
   int exitRoom(int userid);
@@ -80,6 +82,19 @@ int roomhandler<MAX_ROOM_COUNT, MAX_USER_COUNT_PER_ROOM>::login(const char* user
   if (usernamelist.count(std::string(username)) == 0) return 0;
   return usernamelist[std::string(username)]->login(password);
 }
+
+template<int MAX_ROOM_COUNT, int MAX_USER_COUNT_PER_ROOM>
+int roomhandler<MAX_ROOM_COUNT, MAX_USER_COUNT_PER_ROOM>::getRoom(const char* username) {
+  if (usernamelist.count(std::string(username)) == 0) return -1;
+  return usernamelist[std::string(newUser->username)]->getroom();
+}
+
+template<int MAX_ROOM_COUNT, int MAX_USER_COUNT_PER_ROOM>
+int roomhandler<MAX_ROOM_COUNT, MAX_USER_COUNT_PER_ROOM>::getUserID(const char* username) {
+  if (usernamelist.count(std::string(username)) == 0) return -1;
+  return usernamelist[std::string(newUser->username)]->getuserid();
+}
+
 
 template<int MAX_ROOM_COUNT, int MAX_USER_COUNT_PER_ROOM>
 int roomhandler<MAX_ROOM_COUNT, MAX_USER_COUNT_PER_ROOM>::createRoom(const char* roomname) {
