@@ -4,7 +4,6 @@
 #include "user.h"
 
 struct room {
- public:
   room(const char* _roomname);
   int removeuser(int userid);
   int adduser(user* newuser);
