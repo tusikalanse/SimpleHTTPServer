@@ -6,7 +6,7 @@
     <script src="http://code.jquery.com/jquery-latest.js"></script>
     <script>
       function doPost(URL) {
-        PARAMS = {'UID' : $("#u6_input").val(), 'password' : $("#u7_input").val()};
+        PARAMS = {'name' : $("#name").val(), 'password' : $("#password").val()};
         var temp = document.createElement("form");
         temp.action = URL;
         temp.method = "post";
@@ -36,16 +36,16 @@
 
       <div>
         <p><span style="text-decoration:none;">用户名：</span></p>
-        <input id="u11_input" type="text" value="" class="u11_input"/>
+        <input id="name" type="text" value=""/>
       </div>
 
       <div>
         <p><span style="text-decoration:none;">密码：</span></p>
-        <input id="u12_input" type="password" value="" class="u12_input"/>
+        <input id="password" type="password" value=""/>
       </div>
 
       <div>
-          <p><span style="text-decoration:none;">没有账户？</span><a id="u5" class="link"><span style="text-decoration:none;color:#0000FF;" onclick="location='register'">注册</span></a><span style="text-decoration:none;">一个</span></p>
+        <p><span style="text-decoration:none;">没有账户？</span><a><span style="text-decoration:none;color:#0000FF;" onclick="location='register'">注册</span></a><span style="text-decoration:none;">一个</span></p>
       </div>
 
     </div>
