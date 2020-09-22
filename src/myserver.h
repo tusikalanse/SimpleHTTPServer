@@ -12,17 +12,17 @@ class myserver {
  public:
   myserver();
   myserver(in_port_t _port);
-  void run();
+  void run(int USER_IPCKEY, int ROOM_IPCKEY);
  private:
   void work(int client_sockfd);
   void HTTPParser(int client_sockfd, const char* buf);
   void dealGet(int client_sockfd, const char* buf, int len);
   void dealPost(int client_sockfd, const char* buf, const char* body, int len);
   void sendHTMLPage(int client_sockfd, const char* address);
-  void sendSuccessPage(int client_s, const char* hint);
-  void sendSuccessPage(int client_s, const char* hint, const char* name, const char* password);
-  void sendErrorPage(int client_s, const char* hint);
-  void sendErrorPage(int client_s, const char* hint, const char* name, const char* password);
+  void sendSuccessPage(int client_sockfd, const char* hint, const char* redirect);
+  void sendSuccessPage(int client_sockfd, const char* hint, const char* name, const char* password, const char* redirect);
+  void sendErrorPage(int client_sockfd, const char* hint, const char* redirect);
+  void sendErrorPage(int client_sockfd, const char* hint, const char* name, const char* password, const char* redirect);
   void sendRoomList(int client_sockfd, const char* name, const char* password);
   void sendRoom(int client_sockfd, const char* name, const char* password, const char* roomname);
   static void setnonblocking(int sockfd);

@@ -7,6 +7,8 @@
 #include <thread>
 #include <unistd.h>
 #include <sys/epoll.h>
+#include <sys/sendfile.h>
+#include <sys/stat.h>
 
 myserver::myserver() : 
     port(8000) 
@@ -16,7 +18,9 @@ myserver::myserver(in_port_t _port) :
     port(_port) 
   {}
 
-void myserver::run() {
+void myserver::run(int USER_IPCKEY, int ROOM_IPCKEY) {
+  handler.init(USER_IPCKEY, ROOM_IPCKEY);
+
   int server_sockfd;
   sockaddr_in server_addr;
   memset(&server_addr, 0, sizeof(server_addr));
@@ -151,7 +155,7 @@ void myserver::dealGet(int client_sockfd, const char* buf, int len) {
   else if (strstr(temp, "login") == temp + 1) {
     sendHTMLPage(client_sockfd, "login");
   }
-  else if (strstr(temp, "roomlist") == temp + 1 || strstr(temp, "room") == temp + 1) {
+  else if (strstr(temp, "roomlist") == temp + 1) {
     if (temp[8] != '?') 
       sendHTMLPage(client_sockfd, "login");
     else {
@@ -174,8 +178,43 @@ void myserver::dealGet(int client_sockfd, const char* buf, int len) {
         sendHTMLPage(client_sockfd, "login");
     }
   }
+  else if (strstr(temp, "join") == temp + 1) {
+    const char* name = strstr(buf, "name=");
+    char* password = const_cast<char*>(strstr(buf, "&password="));
+    password[0] = '\0';
+    char* room = const_cast<char*>(strstr(buf, "&roomid="));
+    int roomid = atoi(room + 8);
+    int userid = handler.getUserID(name + 5);
+    char* end = const_cast<char*>(strstr(buf, "\r\n"));
+    end[0] = '\0';
+    int loginStatus = handler.login(name + 5, password + 10);
+    if (loginStatus == 0) {
+      sendErrorPage(client_sockfd, "Wrong Username or Password", "login");
+    }
+    else {
+      int joinStatus = handler.joinRoom(userid, roomid);
+      if (joinStatus == -1) {
+        sendErrorPage(client_sockfd, "Room does not exist", name + 5, password + 10, "roomlist");
+      }
+      else if (joinStatus == -2) {
+        sendErrorPage(client_sockfd, "User does not exist", "login");
+      }
+      else if (joinStatus == -3) {
+        sendErrorPage(client_sockfd, "The room is full", name + 5, password + 10, "roomlist");
+      }
+      else if (joinStatus == -4) {
+        sendErrorPage(client_sockfd, "Please exit your room first", name + 5, password + 10, "roomlist");
+      }
+      else if (joinStatus == -5) {
+        sendErrorPage(client_sockfd, "Join room failed",  name + 5, password + 10, "roomlist");
+      }
+      else if (joinStatus == 0) {
+        sendRoom(client_sockfd, name + 5, password + 10, room + 8);
+      }
+    }
+  }
   else {
-    sendErrorPage(client_sockfd, "notfound");
+    sendErrorPage(client_sockfd, "notfound", "login");
   }
 }
 
@@ -190,16 +229,16 @@ void myserver::dealPost(int client_sockfd, const char* buf, const char* body, in
     end[0] = '\0';
     int registerStatus = handler.registerUser(name + 5, password + 10);
     if (registerStatus == -1) {
-      sendErrorPage(client_sockfd, "User already exist");
+      sendErrorPage(client_sockfd, "User already exist", "register");
     }
     else if (registerStatus == 2) {
-      sendErrorPage(client_sockfd, "Server refused your registration");
+      sendErrorPage(client_sockfd, "Server refused your registration", "register");
     }
     else if (registerStatus == 3) {
-      sendErrorPage(client_sockfd, "Username or password too long");
+      sendErrorPage(client_sockfd, "Username or password too long", "register");
     }
     else {
-      sendSuccessPage(client_sockfd, "Successfully registered");
+      sendSuccessPage(client_sockfd, "Successfully registered", "login");
     }
   }
   else if (strstr(temp, "login") == temp + 1) {
@@ -210,7 +249,7 @@ void myserver::dealPost(int client_sockfd, const char* buf, const char* body, in
     end[0] = '\0';
     int loginStatus = handler.login(name + 5, password + 10);
     if (loginStatus == 0) {
-      sendErrorPage(client_sockfd, "Wrong Username or Password");
+      sendErrorPage(client_sockfd, "Wrong Username or Password", "login");
     }
     else {
       int room = handler.getRoom(name + 5);
@@ -218,42 +257,7 @@ void myserver::dealPost(int client_sockfd, const char* buf, const char* body, in
         sendRoomList(client_sockfd, name + 5, password + 10);
       }
       else {
-        sendRoom(client_sockfd, name + 5, password + 10, room);
-      }
-    }
-  }
-  else if (strstr(temp, "join") == temp + 1) {
-    const char* name = strstr(body, "name=");
-    char* password = const_cast<char*>(strstr(body, "&password="));
-    password[0] = '\0';
-    char* room = const_cast<char*>(strstr(body, "&roomid="));
-    int roomid = atoi(room);
-    int userid = handler.getUserID(name + 5);
-    char* end = const_cast<char*>(strstr(body, "\r\n"));
-    end[0] = '\0';
-    int loginStatus = handler.login(name + 5, password + 10);
-    if (loginStatus == 0) {
-      sendErrorPage(client_sockfd, "Wrong Username or Password");
-    }
-    else {
-      int joinStatus = handler.joinRoom(userid, roomid);
-      if (joinStatus == -1) {
-        sendErrorPage(client_sockfd, "Room does not exist");
-      }
-      else if (joinStatus == -2) {
-        sendErrorPage(client_sockfd, "User does not exist");
-      }
-      else if (joinStatus == -3) {
-        sendErrorPage(client_sockfd, "The room is full", name + 5, password + 10);
-      }
-      else if (joinStatus == -4) {
-        sendErrorPage(client_sockfd, "Please exit your room first", name + 5, password + 10);
-      }
-      else if (joinStatus == -5) {
-        sendErrorPage(client_sockfd, "Join room failed",  name + 5, password + 10);
-      }
-      else if (joinStatus == 0) {
-        sendRoom(client_sockfd, name + 5, password + 10, roomid);
+        sendRoom(client_sockfd, name + 5, password + 10, name + 5);
       }
     }
   }
@@ -266,15 +270,15 @@ void myserver::dealPost(int client_sockfd, const char* buf, const char* body, in
     end[0] = '\0';
     int loginStatus = handler.login(name + 5, password + 10);
     if (loginStatus == 0) {
-      sendErrorPage(client_sockfd, "Wrong Username or Password");
+      sendErrorPage(client_sockfd, "Wrong Username or Password", "login");
     }
     else {
       int exitStatus = handler.exitRoom(userid);
       if (exitStatus == -1) {
-        sendErrorPage(client_sockfd, "User does not exist");
+        sendErrorPage(client_sockfd, "User does not exist", "login");
       }
       else if (exitStatus == -2) {
-        sendErrorPage(client_sockfd, "You and not in a room", name + 5, password + 10);
+        sendErrorPage(client_sockfd, "You and not in a room", name + 5, password + 10, "roomlist");
       }
       else if (exitStatus == 0) {
         sendRoomList(client_sockfd, name + 5, password + 10);
@@ -291,20 +295,20 @@ void myserver::dealPost(int client_sockfd, const char* buf, const char* body, in
     end[0] = '\0';
     int loginStatus = handler.login(name + 5, password + 10);
     if (loginStatus == 0) {
-      sendErrorPage(client_sockfd, "Wrong Username or Password");
+      sendErrorPage(client_sockfd, "Wrong Username or Password", "login");
     }
     else {
       int createStatus = handler.createRoom(room + 10);
       if (createStatus == -1) {
-        sendErrorPage(client_sockfd, "The number of rooms has reached the limit", name + 5, password + 10);
+        sendErrorPage(client_sockfd, "The number of rooms has reached the limit", name + 5, password + 10, "roomlist");
       }
       else {
-        sendSuccessPage(client_sockfd, "Create new room success!", name + 5, password + 10);
+        sendSuccessPage(client_sockfd, "Create new room success!", name + 5, password + 10, "roomlist");
       }
     }
   }
   else {
-    sendHTMLPage(client_sockfd, "notfound");
+    sendErrorPage(client_sockfd, "notfound", "login");
   }
 }
 
@@ -312,20 +316,107 @@ void myserver::sendHTMLPage(int client_sockfd, const char* address) {
   char path[PATH_MAX];
   char buffer[BUFFER_SIZE];
   sprintf(path, "html/%s.html", address);
-
+  struct stat st;
+  int file_fd = open(path, O_RDONLY);
+  off_t offset = 0;
+  stat(path, &st);
+  sprintf(buffer, "HTTP/1.1 200 OK\r\n");
+  send(client_sockfd, buffer, strlen(buffer), 0);
+  sprintf(buffer, "Content-Length: %d\r\n", st.st_size);
+  send(client_sockfd, buffer, strlen(buffer), 0);
+  sprintf(buffer, "Content-Type: text/html\r\n\r\n");
+  send(client_sockfd, buffer, strlen(buffer), 0);
+  sendfile(client_sockfd, file_fd, &offset, st.st_size);
 }
 
-void myserver::sendSuccessPage(int client_s, const char* hint);
+void myserver::sendSuccessPage(int client_sockfd, const char* hint, const char* redirect) {
+  char path[PATH_MAX];
+  char buffer[BUFFER_SIZE];
+  char file[BUFFER_SIZE];
+  sprintf(path, "html/success.html");
+  FILE* fp = fopen(path, "rb");
+  fread(buffer, 1, BUFFER_SIZE, fp);
+  sprintf(file, buffer, redirect, hint);
+  sprintf(buffer, "HTTP/1.1 200 OK\r\n");
+  send(client_sockfd, buffer, strlen(buffer), 0);
+  sprintf(buffer, "Content-Length: %d\r\n", strlen(file));
+  send(client_sockfd, buffer, strlen(buffer), 0);
+  sprintf(buffer, "Content-Type: text/html\r\n\r\n");
+  send(client_sockfd, buffer, strlen(buffer), 0);
+  send(client_sockfd, file, strlen(file), 0);
+}
 
-void myserver::sendSuccessPage(int client_s, const char* hint, const char* name, const char* password);
+void myserver::sendSuccessPage(int client_sockfd, const char* hint, const char* name, const char* password, const char* redirect) {
+  char buffer[BUFFER_SIZE];
+  sprintf(buffer, "%s?name=%s&password=%s", redirect, name, password);
+  sendSuccessPage(client_sockfd, hint, buffer);
+}
 
-void myserver::sendErrorPage(int client_s, const char* hint);
+void myserver::sendErrorPage(int client_sockfd, const char* hint, const char* redirect) {
+  char path[PATH_MAX];
+  char buffer[BUFFER_SIZE];
+  char file[BUFFER_SIZE];
+  sprintf(path, "html/error.html");
+  FILE* fp = fopen(path, "rb");
+  fread(buffer, 1, BUFFER_SIZE, fp);
+  sprintf(file, buffer, redirect, hint);
+  sprintf(buffer, "HTTP/1.1 200 OK\r\n");
+  send(client_sockfd, buffer, strlen(buffer), 0);
+  sprintf(buffer, "Content-Length: %d\r\n", strlen(file));
+  send(client_sockfd, buffer, strlen(buffer), 0);
+  sprintf(buffer, "Content-Type: text/html\r\n\r\n");
+  send(client_sockfd, buffer, strlen(buffer), 0);
+  send(client_sockfd, file, strlen(file), 0);
+}
 
-void myserver::sendErrorPage(int client_s, const char* hint, const char* name, const char* password);
+void myserver::sendErrorPage(int client_sockfd, const char* hint, const char* name, const char* password, const char* redirect) {
+  char buffer[BUFFER_SIZE];
+  sprintf(buffer, "%s?name=%s&password=%s", redirect, name, password);
+  sendErrorPage(client_sockfd, hint, buffer);
+}
 
-void myserver::sendRoomList(int client_sockfd, const char* name, const char* password);
+void myserver::sendRoomList(int client_sockfd, const char* name, const char* password) {
+  char path[PATH_MAX];
+  char buffer[BUFFER_SIZE];
+  char file[BUFFER_SIZE];
+  char roomlist[BUFFER_SIZE];
+  roomlist[0] = 0;
+  const std::vector<room*>& rooms = handler.getRoomList();
+  for (int i = 0; i < rooms.size(); ++i) {
+    int len = strlen(roomlist);
+    sprintf(roomlist + len, "<div>\r\n<p><span style=\"text-decoration:none;\">%s</span><a>\
+    <span style=\"text-decoration:none;color:#0000FF;\" onclick=\"location='join?name=%s&password=%s&roomid=%d'\">注册</span></a><span style=\"text-decoration:none;\">一个</span></p></div>", \
+    rooms[i]->roomname, name, password, rooms[i]->roomid);
+  }
+  sprintf(path, "html/roomlist.html");
+  FILE* fp = fopen(path, "rb");
+  fread(buffer, 1, BUFFER_SIZE, fp);
+  sprintf(file, buffer, name, password, roomlist);
+  sprintf(buffer, "HTTP/1.1 200 OK\r\n");
+  send(client_sockfd, buffer, strlen(buffer), 0);
+  sprintf(buffer, "Content-Length: %d\r\n", strlen(file));
+  send(client_sockfd, buffer, strlen(buffer), 0);
+  sprintf(buffer, "Content-Type: text/html\r\n\r\n");
+  send(client_sockfd, buffer, strlen(buffer), 0);
+  send(client_sockfd, file, strlen(file), 0);
+}
 
-void myserver::sendRoom(int client_sockfd, const char* name, const char* password, const char* roomname);
+void myserver::sendRoom(int client_sockfd, const char* name, const char* password, const char* roomname) {
+  char path[PATH_MAX];
+  char buffer[BUFFER_SIZE];
+  char file[BUFFER_SIZE];
+  sprintf(path, "html/room.html");
+  FILE* fp = fopen(path, "rb");
+  fread(buffer, 1, BUFFER_SIZE, fp);
+  sprintf(file, buffer, roomname, name, password, roomname);
+  sprintf(buffer, "HTTP/1.1 200 OK\r\n");
+  send(client_sockfd, buffer, strlen(buffer), 0);
+  sprintf(buffer, "Content-Length: %d\r\n", strlen(file));
+  send(client_sockfd, buffer, strlen(buffer), 0);
+  sprintf(buffer, "Content-Type: text/html\r\n\r\n");
+  send(client_sockfd, buffer, strlen(buffer), 0);
+  send(client_sockfd, file, strlen(file), 0);
+}
 
 void myserver::setnonblocking(int sockfd) {
   int flag = fcntl(sockfd, F_GETFL, 0);
