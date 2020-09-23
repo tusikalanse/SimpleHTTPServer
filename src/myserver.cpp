@@ -161,8 +161,8 @@ void myserver::dealGet(int client_sockfd, const char* buf, int len) {
     else {
       const char* name = strstr(buf, "name=");
       char* password = const_cast<char*>(strstr(buf, "&password="));
-      password[0] = '\0';
       char* end = const_cast<char*>(strstr(buf, "\r\n"));
+      password[0] = '\0';
       end[0] = '\0';
       int success = handler.login(name + 5, password + 10);
       if (success) {
@@ -181,11 +181,11 @@ void myserver::dealGet(int client_sockfd, const char* buf, int len) {
   else if (strstr(temp, "join") == temp + 1) {
     const char* name = strstr(buf, "name=");
     char* password = const_cast<char*>(strstr(buf, "&password="));
-    password[0] = '\0';
     char* room = const_cast<char*>(strstr(buf, "&roomid="));
     int roomid = atoi(room + 8);
     int userid = handler.getUserID(name + 5);
     char* end = const_cast<char*>(strstr(buf, "\r\n"));
+    password[0] = '\0';
     end[0] = '\0';
     int loginStatus = handler.login(name + 5, password + 10);
     if (loginStatus == 0) {
@@ -224,17 +224,17 @@ void myserver::dealPost(int client_sockfd, const char* buf, const char* body, in
     //todo 发送register页面
     const char* name = strstr(body, "name=");
     char* password = const_cast<char*>(strstr(body, "&password="));
+    char* end = const_cast<char*>(body + len);
     password[0] = '\0';
-    char* end = const_cast<char*>(strstr(body, "\r\n"));
     end[0] = '\0';
     int registerStatus = handler.registerUser(name + 5, password + 10);
     if (registerStatus == -1) {
       sendErrorPage(client_sockfd, "User already exist", "register");
     }
-    else if (registerStatus == 2) {
+    else if (registerStatus == -2) {
       sendErrorPage(client_sockfd, "Server refused your registration", "register");
     }
-    else if (registerStatus == 3) {
+    else if (registerStatus == -3) {
       sendErrorPage(client_sockfd, "Username or password too long", "register");
     }
     else {
@@ -244,8 +244,8 @@ void myserver::dealPost(int client_sockfd, const char* buf, const char* body, in
   else if (strstr(temp, "login") == temp + 1) {
     const char* name = strstr(body, "name=");
     char* password = const_cast<char*>(strstr(body, "&password="));
+    char* end = const_cast<char*>(body + len);
     password[0] = '\0';
-    char* end = const_cast<char*>(strstr(body, "\r\n"));
     end[0] = '\0';
     int loginStatus = handler.login(name + 5, password + 10);
     if (loginStatus == 0) {
@@ -264,9 +264,9 @@ void myserver::dealPost(int client_sockfd, const char* buf, const char* body, in
   else if (strstr(temp, "exit") == temp + 1) {
     const char* name = strstr(body, "name=");
     char* password = const_cast<char*>(strstr(body, "&password="));
-    password[0] = '\0';
     int userid = handler.getUserID(name + 5);
-    char* end = const_cast<char*>(strstr(body, "\r\n"));
+    char* end = const_cast<char*>(body + len);
+    password[0] = '\0';
     end[0] = '\0';
     int loginStatus = handler.login(name + 5, password + 10);
     if (loginStatus == 0) {
@@ -288,10 +288,10 @@ void myserver::dealPost(int client_sockfd, const char* buf, const char* body, in
   else if (strstr(temp, "create") == temp + 1) {
     const char* name = strstr(body, "name=");
     char* password = const_cast<char*>(strstr(body, "&password="));
-    password[0] = '\0';
     char* room = const_cast<char*>(strstr(body, "&roomname="));
     int userid = handler.getUserID(name + 5);
-    char* end = const_cast<char*>(strstr(body, "\r\n"));
+    char* end = const_cast<char*>(body + len);
+    password[0] = '\0';
     end[0] = '\0';
     int loginStatus = handler.login(name + 5, password + 10);
     if (loginStatus == 0) {
@@ -315,7 +315,7 @@ void myserver::dealPost(int client_sockfd, const char* buf, const char* body, in
 void myserver::sendHTMLPage(int client_sockfd, const char* address) {
   char path[PATH_MAX];
   char buffer[BUFFER_SIZE];
-  sprintf(path, "html/%s.html", address);
+  sprintf(path, "../html/%s.html", address);
   struct stat st;
   int file_fd = open(path, O_RDONLY);
   off_t offset = 0;
@@ -333,9 +333,10 @@ void myserver::sendSuccessPage(int client_sockfd, const char* hint, const char* 
   char path[PATH_MAX];
   char buffer[BUFFER_SIZE];
   char file[BUFFER_SIZE];
-  sprintf(path, "html/success.html");
+  sprintf(path, "../html/success.html");
   FILE* fp = fopen(path, "rb");
-  fread(buffer, 1, BUFFER_SIZE, fp);
+  int cnt = fread(buffer, 1, BUFFER_SIZE, fp);
+  buffer[cnt] = '\0';
   sprintf(file, buffer, redirect, hint);
   sprintf(buffer, "HTTP/1.1 200 OK\r\n");
   send(client_sockfd, buffer, strlen(buffer), 0);
@@ -356,9 +357,10 @@ void myserver::sendErrorPage(int client_sockfd, const char* hint, const char* re
   char path[PATH_MAX];
   char buffer[BUFFER_SIZE];
   char file[BUFFER_SIZE];
-  sprintf(path, "html/error.html");
+  sprintf(path, "../html/error.html");
   FILE* fp = fopen(path, "rb");
-  fread(buffer, 1, BUFFER_SIZE, fp);
+  int cnt = fread(buffer, 1, BUFFER_SIZE, fp);
+  buffer[cnt] = '\0';
   sprintf(file, buffer, redirect, hint);
   sprintf(buffer, "HTTP/1.1 200 OK\r\n");
   send(client_sockfd, buffer, strlen(buffer), 0);
@@ -388,9 +390,10 @@ void myserver::sendRoomList(int client_sockfd, const char* name, const char* pas
     <span style=\"text-decoration:none;color:#0000FF;\" onclick=\"location='join?name=%s&password=%s&roomid=%d'\">注册</span></a><span style=\"text-decoration:none;\">一个</span></p></div>", \
     rooms[i]->roomname, name, password, rooms[i]->roomid);
   }
-  sprintf(path, "html/roomlist.html");
+  sprintf(path, "../html/roomlist.html");
   FILE* fp = fopen(path, "rb");
-  fread(buffer, 1, BUFFER_SIZE, fp);
+  int cnt = fread(buffer, 1, BUFFER_SIZE, fp);
+  buffer[cnt] = '\0';
   sprintf(file, buffer, name, password, roomlist);
   sprintf(buffer, "HTTP/1.1 200 OK\r\n");
   send(client_sockfd, buffer, strlen(buffer), 0);
@@ -405,9 +408,10 @@ void myserver::sendRoom(int client_sockfd, const char* name, const char* passwor
   char path[PATH_MAX];
   char buffer[BUFFER_SIZE];
   char file[BUFFER_SIZE];
-  sprintf(path, "html/room.html");
+  sprintf(path, "../html/room.html");
   FILE* fp = fopen(path, "rb");
-  fread(buffer, 1, BUFFER_SIZE, fp);
+  int cnt = fread(buffer, 1, BUFFER_SIZE, fp);
+  buffer[cnt] = '\0';
   sprintf(file, buffer, roomname, name, password, roomname);
   sprintf(buffer, "HTTP/1.1 200 OK\r\n");
   send(client_sockfd, buffer, strlen(buffer), 0);
