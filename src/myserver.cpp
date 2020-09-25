@@ -156,19 +156,21 @@ void myserver::dealGet(int client_sockfd, const char* buf, int len) {
     sendHTMLPage(client_sockfd, "login");
   }
   else if (strstr(temp, "roomlist") == temp + 1) {
-    if (temp[8] != '?') 
+    if (temp[9] != '?') 
       sendHTMLPage(client_sockfd, "login");
     else {
       const char* name = strstr(buf, "name=");
       char* password = const_cast<char*>(strstr(buf, "&password="));
-      char* end = const_cast<char*>(strstr(buf, "\r\n"));
+      char* end = const_cast<char*>(strstr(password, "\r\n"));
+      end[0] = '\0';
+      end = const_cast<char*>(strrchr(password, ' '));
       password[0] = '\0';
       end[0] = '\0';
       int success = handler.login(name + 5, password + 10);
       if (success) {
         int room = handler.getRoom(name + 5);
         if (room == 0) {
-          sendRoomList(client_sockfd, name, password);
+          sendRoomList(client_sockfd, name + 5, password + 10);
         }
         else {
           sendRoom(client_sockfd, name, password, handler.getRoomName(room));
@@ -182,11 +184,12 @@ void myserver::dealGet(int client_sockfd, const char* buf, int len) {
     const char* name = strstr(buf, "name=");
     char* password = const_cast<char*>(strstr(buf, "&password="));
     char* room = const_cast<char*>(strstr(buf, "&roomid="));
-    int roomid = atoi(room + 8);
-    int userid = handler.getUserID(name + 5);
     char* end = const_cast<char*>(strstr(buf, "\r\n"));
     password[0] = '\0';
+    room[0] = '\0';
     end[0] = '\0';
+    int userid = handler.getUserID(name + 5);
+    int roomid = atoi(room + 8);
     int loginStatus = handler.login(name + 5, password + 10);
     if (loginStatus == 0) {
       sendErrorPage(client_sockfd, "Wrong Username or Password", "login");
@@ -209,7 +212,7 @@ void myserver::dealGet(int client_sockfd, const char* buf, int len) {
         sendErrorPage(client_sockfd, "Join room failed",  name + 5, password + 10, "roomlist");
       }
       else if (joinStatus == 0) {
-        sendRoom(client_sockfd, name + 5, password + 10, room + 8);
+        sendRoom(client_sockfd, name + 5, password + 10, handler.getRoomName(roomid));
       }
     }
   }
@@ -257,17 +260,17 @@ void myserver::dealPost(int client_sockfd, const char* buf, const char* body, in
         sendRoomList(client_sockfd, name + 5, password + 10);
       }
       else {
-        sendRoom(client_sockfd, name + 5, password + 10, name + 5);
+        sendRoom(client_sockfd, name + 5, password + 10, handler.getRoomName(room));
       }
     }
   }
   else if (strstr(temp, "exit") == temp + 1) {
     const char* name = strstr(body, "name=");
     char* password = const_cast<char*>(strstr(body, "&password="));
-    int userid = handler.getUserID(name + 5);
     char* end = const_cast<char*>(body + len);
     password[0] = '\0';
     end[0] = '\0';
+    int userid = handler.getUserID(name + 5);
     int loginStatus = handler.login(name + 5, password + 10);
     if (loginStatus == 0) {
       sendErrorPage(client_sockfd, "Wrong Username or Password", "login");
@@ -292,6 +295,7 @@ void myserver::dealPost(int client_sockfd, const char* buf, const char* body, in
     int userid = handler.getUserID(name + 5);
     char* end = const_cast<char*>(body + len);
     password[0] = '\0';
+    room[0] = '\0';
     end[0] = '\0';
     int loginStatus = handler.login(name + 5, password + 10);
     if (loginStatus == 0) {
@@ -301,6 +305,9 @@ void myserver::dealPost(int client_sockfd, const char* buf, const char* body, in
       int createStatus = handler.createRoom(room + 10);
       if (createStatus == -1) {
         sendErrorPage(client_sockfd, "The number of rooms has reached the limit", name + 5, password + 10, "roomlist");
+      }
+      else if (createStatus == -2) {
+        sendErrorPage(client_sockfd, "roomname too long", name + 5, password + 10, "roomlist");
       }
       else {
         sendSuccessPage(client_sockfd, "Create new room success!", name + 5, password + 10, "roomlist");
@@ -387,7 +394,7 @@ void myserver::sendRoomList(int client_sockfd, const char* name, const char* pas
   for (int i = 0; i < rooms.size(); ++i) {
     int len = strlen(roomlist);
     sprintf(roomlist + len, "<div>\r\n<p><span style=\"text-decoration:none;\">%s</span><a>\
-    <span style=\"text-decoration:none;color:#0000FF;\" onclick=\"location='join?name=%s&password=%s&roomid=%d'\">注册</span></a><span style=\"text-decoration:none;\">一个</span></p></div>", \
+    <span style=\"text-decoration:none;color:#0000FF;\" onclick=\"location='join?name=%s&password=%s&roomid=%d'\">加入</span></a></p></div>", \
     rooms[i]->roomname, name, password, rooms[i]->roomid);
   }
   sprintf(path, "../html/roomlist.html");

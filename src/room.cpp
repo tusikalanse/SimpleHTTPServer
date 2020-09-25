@@ -29,7 +29,7 @@ int room::removeuser(int userid) {
 int room::adduser(user* newuser) {
   if (usercount == maxusercount) return -1;
   for (int i = 0; i < maxusercount; ++i) {
-    if (userlist[i] != NULL) {
+    if (userlist[i] == NULL) {
       userlist[i] = newuser;
       usercount++;
       return 0;

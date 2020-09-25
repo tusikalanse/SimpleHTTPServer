@@ -111,6 +111,7 @@ int roomhandler<MAX_ROOM_COUNT, MAX_USER_COUNT_PER_ROOM>::getUserID(const char* 
 template<int MAX_ROOM_COUNT, int MAX_USER_COUNT_PER_ROOM>
 int roomhandler<MAX_ROOM_COUNT, MAX_USER_COUNT_PER_ROOM>::createRoom(const char* roomname) {
   if (roompool.full()) return -1;
+  if (strlen(roomname) > 127) return -2;
   room* newRoom = reinterpret_cast<room*>(roompool.apply());
   new (newRoom) room(roomname);
   roomlist[newRoom->roomid] = newRoom;
