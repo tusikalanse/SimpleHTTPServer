@@ -39,7 +39,7 @@ struct user {
   //密码
   char password[128];
   
-  
+  //所在房间id
   int roomid;
 };
 
