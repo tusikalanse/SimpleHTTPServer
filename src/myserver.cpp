@@ -230,6 +230,10 @@ void myserver::dealPost(int client_sockfd, const char* buf, const char* body, in
     const char* name = strstr(body, "name=");
     char* password = const_cast<char*>(strstr(body, "&password="));
     char* end = const_cast<char*>(body + len);
+    if (password == NULL) {
+      sendErrorPage(client_sockfd, "Bad Request", "register");
+      return;
+    }
     password[0] = '\0';
     end[0] = '\0';
     int registerStatus = handler.registerUser(name + 5, password + 10);
@@ -250,6 +254,10 @@ void myserver::dealPost(int client_sockfd, const char* buf, const char* body, in
     const char* name = strstr(body, "name=");
     char* password = const_cast<char*>(strstr(body, "&password="));
     char* end = const_cast<char*>(body + len);
+    if (password == NULL) {
+      sendErrorPage(client_sockfd, "Bad Request", "login");
+      return;
+    }
     password[0] = '\0';
     end[0] = '\0';
     int loginStatus = handler.login(name + 5, password + 10);
@@ -270,6 +278,10 @@ void myserver::dealPost(int client_sockfd, const char* buf, const char* body, in
     const char* name = strstr(body, "name=");
     char* password = const_cast<char*>(strstr(body, "&password="));
     char* end = const_cast<char*>(body + len);
+    if (password == NULL) {
+      sendErrorPage(client_sockfd, "Bad Request", "login");
+      return;
+    }
     password[0] = '\0';
     end[0] = '\0';
     int userid = handler.getUserID(name + 5);
@@ -294,6 +306,10 @@ void myserver::dealPost(int client_sockfd, const char* buf, const char* body, in
     const char* name = strstr(body, "name=");
     char* password = const_cast<char*>(strstr(body, "&password="));
     char* room = const_cast<char*>(strstr(body, "&roomname="));
+    if (password == NULL || room == NULL) {
+      sendErrorPage(client_sockfd, "Bad Request", "login");
+      return;
+    }
     int userid = handler.getUserID(name + 5);
     char* end = const_cast<char*>(body + len);
     password[0] = '\0';
