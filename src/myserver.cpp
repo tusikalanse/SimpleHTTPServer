@@ -130,7 +130,7 @@ void myserver::HTTPParser(int client_sockfd, const char* buf) {
       dealGet(client_sockfd, buf + IDX, temp - buf - IDX + 4);
       IDX = temp - buf + 4;
     }
-    else {
+    else if (buf[IDX] == 'P') {
       const char* temp = strstr(buf + IDX, "Content-Length:");
       int length = 0;
       char ch = *temp;
@@ -143,13 +143,15 @@ void myserver::HTTPParser(int client_sockfd, const char* buf) {
       dealPost(client_sockfd, buf + IDX, temp + 4, length);
       IDX = temp - buf + length + 4;
     }
+    else {
+      
+    }
   }
 }
 
 void myserver::dealGet(int client_sockfd, const char* buf, int len) {
   const char* temp = strchr(buf, '/');
   if (strstr(temp, "register") == temp + 1) {
-    //todo 发送register页面
     sendHTMLPage(client_sockfd, "register");
   }
   else if (strstr(temp, "login") == temp + 1) {
@@ -394,7 +396,7 @@ void myserver::sendRoomList(int client_sockfd, const char* name, const char* pas
   for (int i = 0; i < rooms.size(); ++i) {
     int len = strlen(roomlist);
     sprintf(roomlist + len, "<div>\r\n<p><span style=\"text-decoration:none;\">%s</span><a>\
-    <span style=\"text-decoration:none;color:#0000FF;\" onclick=\"location='join?name=%s&password=%s&roomid=%d'\">加入</span></a></p></div>", \
+    <span style=\"text-decoration:none;cursor:pointer;color:blue\" onclick=\"location='join?name=%s&password=%s&roomid=%d'\">加入</span></a></p></div>", \
     rooms[i]->roomname, name, password, rooms[i]->roomid);
   }
   sprintf(path, "../html/roomlist.html");
