@@ -226,7 +226,6 @@ void myserver::dealGet(int client_sockfd, const char* buf, int len) {
 void myserver::dealPost(int client_sockfd, const char* buf, const char* body, int len) {
   const char* temp = strchr(buf, '/');
   if (strstr(temp, "register") == temp + 1) {
-    //todo 没有password咋办
     const char* name = strstr(body, "name=");
     char* password = const_cast<char*>(strstr(body, "&password="));
     char* end = const_cast<char*>(body + len);
