@@ -9,29 +9,89 @@
 #include <map>
 #include <vector>
 
+//用于处理房间和用户的关系
+//并管理room和user的共享内存池
 template<int MAX_ROOM_COUNT, int MAX_USER_COUNT_PER_ROOM>
 class roomhandler {
  public:
+  //构造函数，将USER_IPCKEY和ROOM_IPCKEY置为-1
   roomhandler();
+
+  //初始化，根据给定参数申请共享内存池
   int init(int useripckey, int roomipckey);
+
+  //注册新用户
+  //用户名重复返回-1
+  //用户数量已达上限返回-2
+  //用户名或密码过长返回-3
+  //注册成功返回0
   int registerUser(const char* username, const char* password);
+
+  //用给定用户名和密码尝试登陆
+  //成功登陆返回1
   int login(const char* username, const char* password);
+
+  //获取用户所在房间id
+  //用户不存在则返回-1，不在任何一个房间中返回0
   int getRoom(const char* username);
+
+  //根据房间id获取房间名
+  //房间不存在返回NULL
   const char* getRoomName(int roomid);
+
+  //根据用户名获取id
+  //用户不存在返回-1
   int getUserID(const char* username);
+
+  //创建新房间
+  //房间数量已达上限返回-1
+  //房间名过长返回-2
+  //成功则返回房间id
   int createRoom(const char* roomname);
+  
+  //用户加入房间
+  //房间不存在返回-1
+  //用户不存在返回-2
+  //房间已满返回-3
+  //用户已在某个房间中返回-4
+  //加入执行失败返回-5
+  //成功返回0
   int joinRoom(int userid, int roomid);
+
+  //用户退出房间
+  //用户不存在返回-1
+  //用户不在房间中返回-2
+  //成功返回0
   int exitRoom(int userid);
+
+  //获取房间列表
   const std::vector<room*>& getRoomList();
  private:
+  //用户共享内存池key
   int USER_IPCKEY;
+
+  //房间共享内存池key
   int ROOM_IPCKEY;
+
+  //每个房间在共享内存中占用大小
   int roomsize;
+
+  //map存储房间列表(id->房间地址)
   std::map<int, room*> roomlist;
+  
+  //vector同步存储房间列表，便于遍历
   std::vector<room*> roomVector;
+
+  //map存储用户列表(id->用户地址)
   std::map<int, user*> userlist;
+  
+  //map存储用户列表(用户名->用户地址)
   std::map<std::string, user*> usernamelist;
+
+  //用户共享内存池
   MyMemoryPool<sizeof(user)> userpool;
+  
+  //房间共享内存池
   MyMemoryPool<sizeof(room) + MAX_USER_COUNT_PER_ROOM * sizeof(user*)> roompool;
 };
 
@@ -49,6 +109,8 @@ int roomhandler<MAX_ROOM_COUNT, MAX_USER_COUNT_PER_ROOM>::init(int useripckey, i
     return -1;
   USER_IPCKEY = useripckey;
   ROOM_IPCKEY = roomipckey;
+
+  //将共享内存中的信息读取到对应map中
   user::usercount = userpool.size();
   for (int i = 0; i < MAX_USER_COUNT_PER_ROOM * MAX_ROOM_COUNT; ++i) {
     if (userpool.getstatus(i)) {
