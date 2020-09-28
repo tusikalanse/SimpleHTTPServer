@@ -144,7 +144,7 @@ void myserver::HTTPParser(int client_sockfd, const char* buf) {
       IDX = temp - buf + length + 4;
     }
     else {
-      
+      break;
     }
   }
 }
