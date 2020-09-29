@@ -381,6 +381,7 @@ void myserver::sendSuccessPage(int client_sockfd, const char* hint, const char* 
   sprintf(buffer, "Content-Type: text/html\r\n\r\n");
   send(client_sockfd, buffer, strlen(buffer), 0);
   send(client_sockfd, file, strlen(file), 0);
+  fclose(fp);
 }
 
 void myserver::sendSuccessPage(int client_sockfd, const char* hint, const char* name, const char* password, const char* redirect) {
@@ -405,6 +406,7 @@ void myserver::sendErrorPage(int client_sockfd, const char* hint, const char* re
   sprintf(buffer, "Content-Type: text/html\r\n\r\n");
   send(client_sockfd, buffer, strlen(buffer), 0);
   send(client_sockfd, file, strlen(file), 0);
+  fclose(fp);
 }
 
 void myserver::sendErrorPage(int client_sockfd, const char* hint, const char* name, const char* password, const char* redirect) {
@@ -438,6 +440,7 @@ void myserver::sendRoomList(int client_sockfd, const char* name, const char* pas
   sprintf(buffer, "Content-Type: text/html\r\n\r\n");
   send(client_sockfd, buffer, strlen(buffer), 0);
   send(client_sockfd, file, strlen(file), 0);
+  fclose(fp);
 }
 
 void myserver::sendRoom(int client_sockfd, const char* name, const char* password, const char* roomname) {
@@ -456,6 +459,7 @@ void myserver::sendRoom(int client_sockfd, const char* name, const char* passwor
   sprintf(buffer, "Content-Type: text/html\r\n\r\n");
   send(client_sockfd, buffer, strlen(buffer), 0);
   send(client_sockfd, file, strlen(file), 0);
+  fclose(fp);
 }
 
 void myserver::setnonblocking(int sockfd) {
