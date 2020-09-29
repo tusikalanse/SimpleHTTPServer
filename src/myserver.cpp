@@ -6,6 +6,7 @@
 #include <string>
 #include <thread>
 #include <unistd.h>
+#include <signal.h>
 #include <sys/epoll.h>
 #include <sys/sendfile.h>
 #include <sys/stat.h>
@@ -19,6 +20,8 @@ myserver::myserver(in_port_t _port) :
   {}
 
 void myserver::run(int USER_IPCKEY, int ROOM_IPCKEY) {
+  signal(SIGPIPE, SIG_IGN);
+
   handler.init(USER_IPCKEY, ROOM_IPCKEY);
 
   int server_sockfd;
@@ -127,11 +130,17 @@ void myserver::HTTPParser(int client_sockfd, const char* buf) {
   while (IDX < n) {
     if (buf[IDX] == 'G') {
       const char* temp = strstr(buf + IDX, "\r\n\r\n");
+      if (temp == NULL) {
+        break;
+      }
       dealGet(client_sockfd, buf + IDX, temp - buf - IDX + 4);
       IDX = temp - buf + 4;
     }
     else if (buf[IDX] == 'P') {
       const char* temp = strstr(buf + IDX, "Content-Length:");
+      if (temp == NULL) {
+        break;
+      }
       int length = 0;
       char ch = *temp;
       while (ch < '0' || ch > '9') ch = *++temp;
@@ -140,6 +149,9 @@ void myserver::HTTPParser(int client_sockfd, const char* buf) {
         ch = *++temp;
       }
       temp = strstr(temp, "\r\n\r\n");
+      if (temp == NULL) {
+        break;
+      }
       dealPost(client_sockfd, buf + IDX, temp + 4, length);
       IDX = temp - buf + length + 4;
     }
