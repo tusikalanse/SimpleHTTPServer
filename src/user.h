@@ -5,8 +5,8 @@
 //保存用户id，用户名，密码，所在房间
 struct user {
   //创建用户
-  user(const char* _username, const char* _password);
-  
+  user(const char *_username, const char *_password);
+
   //获取用户id
   int getuserid();
 
@@ -25,8 +25,8 @@ struct user {
 
   //用指定密码登陆
   //登陆成功返回1
-  int login(const char* _password);
-  
+  int login(const char *_password);
+
   //用于表示下一个用户的id
   static int usercount;
 
@@ -38,7 +38,7 @@ struct user {
 
   //密码
   char password[128];
-  
+
   //所在房间id
   int roomid;
 };

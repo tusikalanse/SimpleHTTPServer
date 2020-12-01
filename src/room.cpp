@@ -5,7 +5,7 @@
 int room::roomcount = 0;
 int room::maxusercount = 0;
 
-room::room(const char* _roomname) {
+room::room(const char *_roomname) {
   strcpy(roomname, _roomname);
   roomid = ++roomcount;
   for (int i = 0; i < maxusercount; ++i) {
@@ -26,8 +26,9 @@ int room::removeuser(int userid) {
   return -1;
 }
 
-int room::adduser(user* newuser) {
-  if (usercount == maxusercount) return -1;
+int room::adduser(user *newuser) {
+  if (usercount == maxusercount)
+    return -1;
   for (int i = 0; i < maxusercount; ++i) {
     if (userlist[i] == NULL) {
       userlist[i] = newuser;
@@ -37,10 +38,6 @@ int room::adduser(user* newuser) {
   }
 }
 
-int room::full() {
-  return usercount == maxusercount;
-}
+int room::full() { return usercount == maxusercount; }
 
-int room::count() {
-  return usercount;
-}
+int room::count() { return usercount; }
