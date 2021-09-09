@@ -7,6 +7,7 @@
 #include <sys/types.h>
 
 #include "roomhandler.h"
+#include "timequeue.h"
 
 //服务处理类
 //用于处理相关网络服务
@@ -76,6 +77,9 @@ private:
 
   // handler类，用于处理房间和用户的关系
   roomhandler<20, 5> handler;
+
+  // 定时器
+  TimerManger timeout_queue;
 };
 
 #endif /* MY_SERVER_H */

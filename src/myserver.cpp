@@ -61,11 +61,12 @@ void myserver::run(int USER_IPCKEY, int ROOM_IPCKEY) {
   }
 
   while (1) {
-    int nfds = epoll_wait(epollfd, events, MAX_EVENTS, -1);
+    int nfds = epoll_wait(epollfd, events, MAX_EVENTS, 1000);
     if (-1 == nfds) {
       perror("epoll_wait fail");
       exit(EXIT_FAILURE);
     }
+    timeout_queue.tick(time(NULL));
     for (int n = 0; n < nfds; ++n) {
       if (events[n].data.fd == server_sockfd) {
         if (!(events[n].events & EPOLLIN))
@@ -213,6 +214,11 @@ void myserver::dealGet(int client_sockfd, const char *buf, int len) {
       } else if (joinStatus == 0) {
         sendRoom(client_sockfd, name + 5, password + 10,
                  handler.getRoomName(roomid));
+        if (handler.getRoomList()[roomid]->usercount == handler.getRoomList()[roomid]->maxusercount) {
+          timeout_queue.addTimer(time(NULL) + 30 + rand() % 30, [=](){
+            handler.clearRoom(roomid);
+          });
+        }
       }
     }
   } else {

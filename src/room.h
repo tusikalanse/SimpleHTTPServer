@@ -3,6 +3,8 @@
 
 #include "user.h"
 
+#include <vector>
+
 //房间结构体
 //保存房间id，名称，当前用户数量，每个用户指针
 struct room {
@@ -16,6 +18,10 @@ struct room {
   //房间添加用户
   //房间已满无法添加返回-1，成功添加返回0
   int adduser(user *newuser);
+
+  //清空用户
+  //返回清空的用户id vector
+  std::vector<int> clear();
 
   //返回房间是否为空
   int full();

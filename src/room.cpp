@@ -39,6 +39,19 @@ int room::adduser(user *newuser) {
   return -1;
 }
 
+std::vector<int> room::clear() {
+  std::vector<int> ret;
+  for (int i = 0; i < maxusercount; ++i) {
+    if (userlist[i] != NULL) {
+      ret.push_back(userlist[i]->getuserid());
+      usercount--;
+      userlist[i] = NULL;
+    }
+  }
+  return ret;
+}
+
+
 int room::full() { return usercount == maxusercount; }
 
 int room::count() { return usercount; }

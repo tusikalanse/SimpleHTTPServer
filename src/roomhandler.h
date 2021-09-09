@@ -63,6 +63,12 @@ public:
   //成功返回0
   int exitRoom(int userid);
 
+  //清空房间
+  //返回清除的玩家数量
+  //房间不存在返回-1
+  int clearRoom(int roomid);
+
+
   //获取房间列表
   const std::vector<room *> &getRoomList();
 
@@ -223,6 +229,18 @@ int roomhandler<MAX_ROOM_COUNT, MAX_USER_COUNT_PER_ROOM>::exitRoom(int userid) {
   userlist[userid]->exitroom();
   return 0;
 }
+
+template <int MAX_ROOM_COUNT, int MAX_USER_COUNT_PER_ROOM>
+int roomhandler<MAX_ROOM_COUNT, MAX_USER_COUNT_PER_ROOM>::clearRoom(int roomid) {
+  if (roomlist.count(roomid) == 0)
+  return -1;
+  std::vector<int> ret = roomlist[roomid]->clear();
+  for (int userid: ret) {
+    userlist[userid]->exitroom();
+  }
+  return ret.size();
+}
+
 
 template <int MAX_ROOM_COUNT, int MAX_USER_COUNT_PER_ROOM>
 const std::vector<room *> &
