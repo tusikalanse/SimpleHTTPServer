@@ -36,6 +36,7 @@ int room::adduser(user *newuser) {
       return 0;
     }
   }
+  return -1;
 }
 
 int room::full() { return usercount == maxusercount; }

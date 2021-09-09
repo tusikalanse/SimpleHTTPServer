@@ -60,9 +60,6 @@ void myserver::run(int USER_IPCKEY, int ROOM_IPCKEY) {
     exit(EXIT_FAILURE);
   }
 
-  int client_sockfd;
-  sockaddr_in client_addr;
-  unsigned int sin_size = sizeof(client_addr);
   while (1) {
     int nfds = epoll_wait(epollfd, events, MAX_EVENTS, -1);
     if (-1 == nfds) {
@@ -302,7 +299,7 @@ void myserver::dealPost(int client_sockfd, const char *buf, const char *body,
       sendErrorPage(client_sockfd, "Bad Request", "login");
       return;
     }
-    int userid = handler.getUserID(name + 5);
+    // int userid = handler.getUserID(name + 5);
     char *end = const_cast<char *>(body + len);
     password[0] = '\0';
     room[0] = '\0';
@@ -339,7 +336,7 @@ void myserver::sendHTMLPage(int client_sockfd, const char *address) {
   stat(path, &st);
   sprintf(buffer, "HTTP/1.1 200 OK\r\n");
   send(client_sockfd, buffer, strlen(buffer), 0);
-  sprintf(buffer, "Content-Length: %d\r\n", st.st_size);
+  sprintf(buffer, "Content-Length: %lu\r\n", st.st_size);
   send(client_sockfd, buffer, strlen(buffer), 0);
   sprintf(buffer, "Content-Type: text/html\r\n\r\n");
   send(client_sockfd, buffer, strlen(buffer), 0);
@@ -358,7 +355,7 @@ void myserver::sendSuccessPage(int client_sockfd, const char *hint,
   sprintf(file, buffer, redirect, hint);
   sprintf(buffer, "HTTP/1.1 200 OK\r\n");
   send(client_sockfd, buffer, strlen(buffer), 0);
-  sprintf(buffer, "Content-Length: %d\r\n", strlen(file));
+  sprintf(buffer, "Content-Length: %lu\r\n", strlen(file));
   send(client_sockfd, buffer, strlen(buffer), 0);
   sprintf(buffer, "Content-Type: text/html\r\n\r\n");
   send(client_sockfd, buffer, strlen(buffer), 0);
@@ -386,7 +383,7 @@ void myserver::sendErrorPage(int client_sockfd, const char *hint,
   sprintf(file, buffer, redirect, hint);
   sprintf(buffer, "HTTP/1.1 200 OK\r\n");
   send(client_sockfd, buffer, strlen(buffer), 0);
-  sprintf(buffer, "Content-Length: %d\r\n", strlen(file));
+  sprintf(buffer, "Content-Length: %lu\r\n", strlen(file));
   send(client_sockfd, buffer, strlen(buffer), 0);
   sprintf(buffer, "Content-Type: text/html\r\n\r\n");
   send(client_sockfd, buffer, strlen(buffer), 0);
@@ -410,7 +407,7 @@ void myserver::sendRoomList(int client_sockfd, const char *name,
   char roomlist[BUFFER_SIZE];
   roomlist[0] = 0;
   const std::vector<room *> &rooms = handler.getRoomList();
-  for (int i = 0; i < rooms.size(); ++i) {
+  for (unsigned int i = 0; i < rooms.size(); ++i) {
     int len = strlen(roomlist);
     sprintf(roomlist + len,
             "<div>\r\n<p><span style=\"text-decoration:none;\">%s</span><a>\
@@ -424,7 +421,7 @@ void myserver::sendRoomList(int client_sockfd, const char *name,
   sprintf(file, buffer, name, password, roomlist);
   sprintf(buffer, "HTTP/1.1 200 OK\r\n");
   send(client_sockfd, buffer, strlen(buffer), 0);
-  sprintf(buffer, "Content-Length: %d\r\n", strlen(file));
+  sprintf(buffer, "Content-Length: %lu\r\n", strlen(file));
   send(client_sockfd, buffer, strlen(buffer), 0);
   sprintf(buffer, "Content-Type: text/html\r\n\r\n");
   send(client_sockfd, buffer, strlen(buffer), 0);
@@ -444,7 +441,7 @@ void myserver::sendRoom(int client_sockfd, const char *name,
   sprintf(file, buffer, roomname, name, password, roomname);
   sprintf(buffer, "HTTP/1.1 200 OK\r\n");
   send(client_sockfd, buffer, strlen(buffer), 0);
-  sprintf(buffer, "Content-Length: %d\r\n", strlen(file));
+  sprintf(buffer, "Content-Length: %lu\r\n", strlen(file));
   send(client_sockfd, buffer, strlen(buffer), 0);
   sprintf(buffer, "Content-Type: text/html\r\n\r\n");
   send(client_sockfd, buffer, strlen(buffer), 0);
