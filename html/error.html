@@ -1,12 +1,34 @@
 <html>
-  <head>
-    <title>
-      Error
-    </title>
-    <meta http-equiv="refresh" content="5;url=http://127.0.0.1:8000/%s">
-  </head>
-  <body>
-    %s
-    This page will be automatically reload in 5 seconds
-  </body>
+
+<head>
+  <title>
+    Error
+  </title>
+  <meta http-equiv="refresh" content="5;url=/%s">
+  <script src="http://code.jquery.com/jquery-latest.js"></script>
+  <script>
+    function doPost(URL) {
+      PARAMS = { 'name': $("#name").val(), 'password': $("#password").val() };
+      var temp = document.createElement("form");
+      temp.action = URL;
+      temp.method = "post";
+      temp.style.display = "none";
+      for (var x in PARAMS) {
+        var opt = document.createElement("textarea");
+        opt.name = x;
+        opt.value = PARAMS[x];
+        temp.appendChild(opt);
+      }
+      document.body.appendChild(temp);
+      temp.submit();
+      return temp;
+    }
+  </script>
+</head>
+
+<body>
+  %s
+  This page will be automatically reload in 5 seconds
+</body>
+
 </html>

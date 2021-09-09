@@ -1,57 +1,62 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <title>服务器登陆</title>
-    <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
-    <script src="http://code.jquery.com/jquery-latest.js"></script>
-    <script>
-      function doPost(URL) {
-        PARAMS = {'name' : $("#name").val(), 'password' : $("#password").val()};
-        var temp = document.createElement("form");
-        temp.action = URL;
-        temp.method = "post";
-        temp.style.display = "none";
-        for (var x in PARAMS) {
-          var opt = document.createElement("textarea");
-          opt.name = x;
-          opt.value = PARAMS[x];
-          temp.appendChild(opt);
-        }
-        document.body.appendChild(temp);
-        temp.submit();
-        return temp;
+
+<head>
+  <title>服务器登陆</title>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+  <script src="http://code.jquery.com/jquery-latest.js"></script>
+  <script>
+    function doPost(URL) {
+      PARAMS = { 'name': $("#name").val(), 'password': $("#password").val() };
+      var temp = document.createElement("form");
+      temp.action = URL;
+      temp.method = "post";
+      temp.style.display = "none";
+      for (var x in PARAMS) {
+        var opt = document.createElement("textarea");
+        opt.name = x;
+        opt.value = PARAMS[x];
+        temp.appendChild(opt);
       }
-    </script>
-  </head>
-  <body>
-    <div id="base" class="">
+      document.body.appendChild(temp);
+      temp.submit();
+      return temp;
+    }
+  </script>
+</head>
 
-      <!-- Unnamed (矩形) -->
-      <div id="u0">
-        <div id="u0_div" class=""></div>
-        <div id="u0_text" class="text ">
-          <p><span style="text-decoration:none;cursor:pointer">输入账号密码</span></p>
-        </div>
+<body>
+  <div id="base" class="">
+
+    <!-- Unnamed (矩形) -->
+    <div id="u0">
+      <div id="u0_div" class=""></div>
+      <div id="u0_text" class="text ">
+        <p><span style="text-decoration:none;cursor:pointer">输入账号密码</span></p>
       </div>
-
-      <div>
-        <p><span style="text-decoration:none;">用户名：</span></p>
-        <input id="name" type="text" value=""/>
-      </div>
-
-      <div>
-        <p><span style="text-decoration:none;">密码：</span></p>
-        <input id="password" type="password" value=""/>
-      </div>
-
-      <div>
-        <p><span style="text-decoration:none;cursor:pointer;color:blue" onclick="doPost('login')">登陆</span></p>
-      </div>
-
-      <div>
-        <p><span style="text-decoration:none;">没有账户？</span><a><span style="text-decoration:none;cursor:pointer;color:#0000FF;" onclick="location='register'">注册</span></a><span style="text-decoration:none;">一个</span></p>
-      </div>
-
     </div>
-  </body>
+
+    <div>
+      <p><span style="text-decoration:none;">用户名：</span></p>
+      <input id="name" type="text" value="" />
+    </div>
+
+    <div>
+      <p><span style="text-decoration:none;">密码：</span></p>
+      <input id="password" type="password" value="" />
+    </div>
+
+    <div>
+      <p><span style="text-decoration:none;cursor:pointer;color:blue" onclick="doPost('login')">登陆</span></p>
+    </div>
+
+    <div>
+      <p><span style="text-decoration:none;">没有账户？</span><a><span
+            style="text-decoration:none;cursor:pointer;color:#0000FF;" onclick="location='register'">注册</span></a><span
+          style="text-decoration:none;">一个</span></p>
+    </div>
+
+  </div>
+</body>
+
 </html>
