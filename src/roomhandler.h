@@ -118,6 +118,7 @@ int roomhandler<MAX_ROOM_COUNT, MAX_USER_COUNT_PER_ROOM>::init(int useripckey,
     return -1;
   if (-1 == roompool.init(roomipckey, MAX_ROOM_COUNT))
     return -1;
+  roompool.clear();
   USER_IPCKEY = useripckey;
   ROOM_IPCKEY = roomipckey;
 
@@ -128,6 +129,7 @@ int roomhandler<MAX_ROOM_COUNT, MAX_USER_COUNT_PER_ROOM>::init(int useripckey,
       user *tempUser = reinterpret_cast<user *>(userpool.get(i));
       userlist[tempUser->userid] = tempUser;
       usernamelist[std::string(tempUser->username)] = tempUser;
+      tempUser->roomid = 0;
     }
   }
   room::roomcount = roompool.size();

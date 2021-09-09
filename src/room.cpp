@@ -11,6 +11,8 @@ room::room(const char *_roomname) {
   for (int i = 0; i < maxusercount; ++i) {
     userlist[i] = NULL;
   }
+  gamestate = 0;
+  usercount = 0;
 }
 
 int room::removeuser(int userid) {

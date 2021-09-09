@@ -216,7 +216,9 @@ void myserver::dealGet(int client_sockfd, const char *buf, int len) {
                  handler.getRoomName(roomid));
         if (handler.getRoomMap()[roomid]->usercount == handler.getRoomMap()[roomid]->maxusercount) {
           handler.getRoomMap()[roomid]->gamestate = 1;
+          std::cout << "room " << roomid << " game start" << std::endl;
           timeout_queue.addTimer(time(NULL) + 30 + rand() % 30, [=]() {
+            std::cout << "to clear room " << roomid << std::endl;
             handler.clearRoom(roomid);
             std::cout << "clear room " << roomid << std::endl;
           });
