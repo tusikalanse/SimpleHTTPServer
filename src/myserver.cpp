@@ -149,6 +149,7 @@ void myserver::HTTPParser(int client_sockfd, const char *buf) {
       dealPost(client_sockfd, buf + IDX, temp + 4, length);
       IDX = temp - buf + length + 4;
     } else {
+      send(client_sockfd, "BAD HTTP REQUEST", 16, 0);
       break;
     }
   }

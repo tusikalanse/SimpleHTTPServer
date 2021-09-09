@@ -14,8 +14,54 @@
 #include <thread>
 #include <unistd.h>
 
-int main(int ) {
+const int MAX_EVENTS = 1024;
+
+inline void setnonblocking(int sockfd) {
+  int flag = fcntl(sockfd, F_GETFL, 0);
+  if (flag < 0) {
+    perror("fcntl F_GETFL fail");
+    return;
+  }
+  if (fcntl(sockfd, F_SETFL, flag | O_NONBLOCK) < 0) {
+    perror("fcntl F_SETFL fail");
+  }
+}
+
+char main_buf[8192];
+int main_len;
+
+int main(int argc, char *argv[]) {
+  if (argc < 4) {
+    std::cout << "Usage: ./REPLICA port main_ip main_port" << std::endl;
+    return 0;
+  }
   signal(SIGPIPE, SIG_IGN);
+
+  int port = atoi(argv[1]);
+  std::string main_ip = std::string(argv[2]);
+  int main_port = atoi(argv[3]);
+  int main_sockfd;
+  sockaddr_in main_addr;
+  memset(&main_addr, 0, sizeof(main_addr));
+  main_addr.sin_family = AF_INET;
+  main_addr.sin_addr.s_addr = inet_addr(main_ip.c_str());
+  main_addr.sin_port = htons(main_port);
+
+  if ((main_sockfd = socket(PF_INET, SOCK_STREAM, 0)) < 0) {
+    perror("socket error");
+    return 0;
+  }
+
+	if(connect(main_sockfd, (struct sockaddr *)&main_addr, sizeof(struct sockaddr)) < 0){
+		perror("connect error");
+		return 1;
+	}
+	printf("connected to main server\n");
+
+	// main_len = recv(main_sockfd, main_buf, 8192, 0);			//接收服务器端信息
+  // main_buf[main_len] = '\0';
+	// printf("%s", main_buf);									//打印服务器端的欢迎信息
+
 
   int server_sockfd;
   sockaddr_in server_addr;
@@ -26,8 +72,23 @@ int main(int ) {
 
   if ((server_sockfd = socket(PF_INET, SOCK_STREAM, 0)) < 0) {
     perror("socket error");
-    return;
+    return 0;
   }
+
+
+	// while(1) {
+  //   printf("print message:\n");
+  //   scanf("%s", main_buf);
+  //   main_len = send(main_sockfd, main_buf, strlen(main_buf), 0);
+  //   printf("send message end: %d\n", main_len);
+    
+  //   if((main_len = recv(main_sockfd, main_buf, 8192, 0)) > 0){
+  //     main_buf[main_len] = '\0';
+  //     printf("Recive from server: %s\n", main_buf);
+  //   }
+  //   usleep(200000);
+  // }
+
 
   int opt = 1;
   setsockopt(server_sockfd, SOL_SOCKET, SO_REUSEADDR, (const void *)&opt,
@@ -36,12 +97,12 @@ int main(int ) {
   if (bind(server_sockfd, (struct sockaddr *)&server_addr,
            sizeof(server_addr)) < 0) {
     perror("bind error");
-    return;
+    return 0;
   }
 
   if (listen(server_sockfd, 128) < 0) {
     perror("listen error");
-    return;
+    return 0;
   }
 
   struct epoll_event ev, events[MAX_EVENTS];
@@ -52,6 +113,7 @@ int main(int ) {
   }
   ev.events = EPOLLIN;
   ev.data.fd = server_sockfd;
+
   if (-1 == epoll_ctl(epollfd, EPOLL_CTL_ADD, server_sockfd, &ev)) {
     perror("epoll_ctl EPOLL_CTL_ADD fail");
     exit(EXIT_FAILURE);
@@ -63,7 +125,7 @@ int main(int ) {
       perror("epoll_wait fail");
       exit(EXIT_FAILURE);
     }
-    timeout_queue.tick(time(NULL));
+
     for (int n = 0; n < nfds; ++n) {
       if (events[n].data.fd == server_sockfd) {
         if (!(events[n].events & EPOLLIN))
@@ -89,29 +151,41 @@ int main(int ) {
         printf("connection from %s, port %d\n", buff, port);
       } else if (events[n].events & EPOLLIN) {
         int client_sockfd = events[n].data.fd;
-        std::thread reader(&myserver::work, this, client_sockfd);
-        reader.join();
+        static char buf[8192];
+        static int buf_pos = 0;
+        while (true) {
+          int ret = recv(client_sockfd, buf + buf_pos, sizeof(buf) - buf_pos, 0);
+          if (ret < 0) {
+            if ((errno == EAGAIN) || (errno == EWOULDBLOCK) || (errno == EINTR)) {
+
+              break;
+            }
+            close(client_sockfd);
+            break;
+          } else if (ret == 0) {
+            close(client_sockfd);
+            break;
+          } else {
+            buf_pos += ret;
+            buf[buf_pos] = '\0';
+
+            main_len = send(main_sockfd, buf, strlen(buf), 0);
+            // printf("send message end: %d\n", main_len);
+            
+            if((main_len = recv(main_sockfd, main_buf, 8192, 0)) > 0){
+              main_buf[main_len] = '\0';
+              // printf("Recive from server: %d\n", main_len);
+              // printf("Recive from server: %s\n", main_buf);
+              int len = send(client_sockfd, main_buf, main_len, 0);
+              printf("send message to client end: %d\n", len);
+            }
+
+            buf_pos = 0;
+          }
+        }
       }
     }
   }
-}
-
-
-  static char buf[1024];
-  while (true) {
-    int ret = recv(client_sockfd, buf, sizeof(buf), 0);
-    if (ret < 0) {
-      if ((errno == EAGAIN) || (errno == EWOULDBLOCK) || (errno == EINTR)) {
-        return;
-      }
-      close(client_sockfd);
-      return;
-    } else if (ret == 0) {
-      close(client_sockfd);
-      return;
-    } else {
-      buf[ret] = '\0';
-      HTTPParser(client_sockfd, buf);
-    }
   return 0;
 }
+
