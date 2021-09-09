@@ -203,7 +203,7 @@ void myserver::dealGet(int client_sockfd, const char *buf, int len) {
       } else if (joinStatus == -2) {
         sendErrorPage(client_sockfd, "User does not exist", "login");
       } else if (joinStatus == -3) {
-        sendErrorPage(client_sockfd, "The room is full", name + 5,
+        sendErrorPage(client_sockfd, "The room is in game", name + 5,
                       password + 10, "roomlist");
       } else if (joinStatus == -4) {
         sendErrorPage(client_sockfd, "Please exit your room first", name + 5,
@@ -214,9 +214,11 @@ void myserver::dealGet(int client_sockfd, const char *buf, int len) {
       } else if (joinStatus == 0) {
         sendRoom(client_sockfd, name + 5, password + 10,
                  handler.getRoomName(roomid));
-        if (handler.getRoomList()[roomid]->usercount == handler.getRoomList()[roomid]->maxusercount) {
-          timeout_queue.addTimer(time(NULL) + 30 + rand() % 30, [=](){
+        if (handler.getRoomMap()[roomid]->usercount == handler.getRoomMap()[roomid]->maxusercount) {
+          handler.getRoomMap()[roomid]->gamestate = 1;
+          timeout_queue.addTimer(time(NULL) + 30 + rand() % 30, [=]() {
             handler.clearRoom(roomid);
+            std::cout << "clear room " << roomid << std::endl;
           });
         }
       }
@@ -415,10 +417,17 @@ void myserver::sendRoomList(int client_sockfd, const char *name,
   const std::vector<room *> &rooms = handler.getRoomList();
   for (unsigned int i = 0; i < rooms.size(); ++i) {
     int len = strlen(roomlist);
-    sprintf(roomlist + len,
-            "<div>\r\n<p><span style=\"text-decoration:none;\">%s %d/%d</span><a>\
-    <span style=\"text-decoration:none;cursor:pointer;color:blue\" onclick=\"location='join?name=%s&password=%s&roomid=%d'\">加入</span></a></p></div>",
-            rooms[i]->roomname, rooms[i]->usercount, rooms[i]->maxusercount, name, password, rooms[i]->roomid);
+    if (rooms[i]->gamestate == 0) {
+      sprintf(roomlist + len,
+              "<div>\r\n<p><span style=\"text-decoration:none;\">%s %d/%d</span><a>\
+      <span style=\"text-decoration:none;cursor:pointer;color:blue\" onclick=\"location='join?name=%s&password=%s&roomid=%d'\">加入</span></a></p></div>",
+              rooms[i]->roomname, rooms[i]->usercount, rooms[i]->maxusercount, name, password, rooms[i]->roomid);
+    }
+    else {
+      sprintf(roomlist + len,
+              "<div>\r\n<p><span style=\"text-decoration:none;\">%s The room is already in the game</span></p></div>",
+              rooms[i]->roomname);
+    }
   }
   sprintf(path, "../html/roomlist.html");
   FILE *fp = fopen(path, "rb");

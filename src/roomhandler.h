@@ -51,7 +51,7 @@ public:
   //用户加入房间
   //房间不存在返回-1
   //用户不存在返回-2
-  //房间已满返回-3
+  //正在游戏中返回-3
   //用户已在某个房间中返回-4
   //加入执行失败返回-5
   //成功返回0
@@ -71,6 +71,10 @@ public:
 
   //获取房间列表
   const std::vector<room *> &getRoomList();
+  
+  //获取房间列表
+  std::map<int, room *> &getRoomMap();
+
 
 private:
   //用户共享内存池key
@@ -208,7 +212,7 @@ int roomhandler<MAX_ROOM_COUNT, MAX_USER_COUNT_PER_ROOM>::joinRoom(int userid,
     return -1;
   if (userlist.count(userid) == 0)
     return -2;
-  if (roomlist[roomid]->full())
+  if (roomlist[roomid]->full() || roomlist[roomid]->gamestate == 1)
     return -3;
   if (userlist[userid]->getroom() != 0)
     return -4;
@@ -233,8 +237,9 @@ int roomhandler<MAX_ROOM_COUNT, MAX_USER_COUNT_PER_ROOM>::exitRoom(int userid) {
 template <int MAX_ROOM_COUNT, int MAX_USER_COUNT_PER_ROOM>
 int roomhandler<MAX_ROOM_COUNT, MAX_USER_COUNT_PER_ROOM>::clearRoom(int roomid) {
   if (roomlist.count(roomid) == 0)
-  return -1;
+    return -1;
   std::vector<int> ret = roomlist[roomid]->clear();
+  roomlist[roomid]->gamestate = 0;
   for (int userid: ret) {
     userlist[userid]->exitroom();
   }
@@ -247,5 +252,11 @@ const std::vector<room *> &
 roomhandler<MAX_ROOM_COUNT, MAX_USER_COUNT_PER_ROOM>::getRoomList() {
   return roomVector;
 }
+
+template <int MAX_ROOM_COUNT, int MAX_USER_COUNT_PER_ROOM>
+std::map<int, room *>& roomhandler<MAX_ROOM_COUNT, MAX_USER_COUNT_PER_ROOM>::getRoomMap() {
+  return roomlist;
+}
+
 
 #endif /* ROOM_HANDLER_H */

@@ -29,7 +29,7 @@ struct room {
   //返回房间内用户数量
   int count();
 
-  //用于表示下一个房间的id
+  //房间最大数量
   static int roomcount;
 
   //房间最大用户数量
@@ -43,6 +43,9 @@ struct room {
 
   //当前房间用户数量
   int usercount;
+
+  //开局状态, 0为等待, 1为游戏中
+  int gamestate;
 
   //用户指针，
   user *userlist[0];

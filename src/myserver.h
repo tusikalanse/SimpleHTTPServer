@@ -76,7 +76,7 @@ private:
   static const int BUFFER_SIZE = 8192;
 
   // handler类，用于处理房间和用户的关系
-  roomhandler<20, 5> handler;
+  roomhandler<20, 3> handler;
 
   // 定时器
   TimerManger timeout_queue;
