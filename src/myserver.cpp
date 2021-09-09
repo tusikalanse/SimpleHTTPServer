@@ -410,9 +410,9 @@ void myserver::sendRoomList(int client_sockfd, const char *name,
   for (unsigned int i = 0; i < rooms.size(); ++i) {
     int len = strlen(roomlist);
     sprintf(roomlist + len,
-            "<div>\r\n<p><span style=\"text-decoration:none;\">%s</span><a>\
+            "<div>\r\n<p><span style=\"text-decoration:none;\">%s %d/%d</span><a>\
     <span style=\"text-decoration:none;cursor:pointer;color:blue\" onclick=\"location='join?name=%s&password=%s&roomid=%d'\">加入</span></a></p></div>",
-            rooms[i]->roomname, name, password, rooms[i]->roomid);
+            rooms[i]->roomname, rooms[i]->usercount, rooms[i]->maxusercount, name, password, rooms[i]->roomid);
   }
   sprintf(path, "../html/roomlist.html");
   FILE *fp = fopen(path, "rb");
